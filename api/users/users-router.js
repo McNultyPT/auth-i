@@ -1,12 +1,28 @@
 const router = require('express').Router();
 const bcrypt = require('bcryptjs');
 
-const db = require('../../data/dbConfig.js');
 const Users = require('./users-model.js');
 
-router.get('/', (req, res) => {
-    res.send("It's Working!");
-});
+function restricted (req, res, next) {
+    const { username, password } = req.body;
+
+    if (username && password) {
+        Users.findBy({ username })
+        .first()
+        .then(user => {
+            if (user && bcrypt.compareSync(password, user.password)) {
+                next();
+            } else {
+                res.status(401).json({ message: 'You shall not pass!' });
+            }
+        })
+        .catch(err => {
+            res.status(500).json(err);
+        })
+    } else {
+        res.status(400).json({ message: 'Please provide your credentials.' });
+    }
+}
 
 router.post('/register', (req, res) => {
     let user = req.body;
@@ -35,6 +51,16 @@ router.post('/login', (req, res) => {
             } else {
                 res.status(401).json({ message: 'You shall not pass!' });
             }
+        })
+        .catch(err => {
+            res.status(500).json(err);
+        });
+});
+
+router.get('/users', restricted, (req, res) => {
+    Users.find()
+        .then(users => {
+            res.status(200).json(users);
         })
         .catch(err => {
             res.status(500).json(err);
