@@ -2,6 +2,7 @@ const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
+const session = require('express-session');
 
 const Users = require('./users/users-model.js');
 
@@ -13,6 +14,19 @@ const server = express();
 server.use(helmet());
 server.use(express.json());
 server.use(cors());
+server.use(
+    session({
+        name: 'usersession',
+        secret: 'This is a secret!',
+        cookie: {
+            maxAge: 1 * 24 * 60 * 60 * 1000,
+            secure: true
+        },
+        httpOnly: true,
+        resave: false,
+        saveUninitialized: false
+    })
+);
 
 server.use('/api/', usersRouter);
 server.use('/api/restricted', restricted, restrictedRouter);
