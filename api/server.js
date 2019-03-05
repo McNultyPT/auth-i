@@ -11,22 +11,22 @@ const restrictedRouter = require('./users/restricted-router.js');
 
 const server = express();
 
+const sessionConfig = {
+    name: 'cookieMonster',
+    secret: 'C is for cookie.',
+    cookie: {
+        maxAge: 1000 * 60 * 60,
+        secure: false
+    },
+    httpOnly: true,
+    resave: false,
+    saveUninitialized: false,
+};
+
 server.use(helmet());
 server.use(express.json());
 server.use(cors());
-server.use(
-    session({
-        name: 'usersession',
-        secret: 'This is a secret!',
-        cookie: {
-            maxAge: 1 * 24 * 60 * 60 * 1000,
-            secure: true
-        },
-        httpOnly: true,
-        resave: false,
-        saveUninitialized: false
-    })
-);
+server.use(session(sessionConfig));
 
 server.use('/api/', usersRouter);
 server.use('/api/restricted', restricted, restrictedRouter);
