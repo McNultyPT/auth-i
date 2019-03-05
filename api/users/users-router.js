@@ -4,24 +4,11 @@ const bcrypt = require('bcryptjs');
 const Users = require('./users-model.js');
 
 function restricted (req, res, next) {
-    const { username, password } = req.body;
-
-    if (username && password) {
-        Users.findBy({ username })
-            .first()
-            .then(user => {
-                if (user && bcrypt.compareSync(password, user.password)) {
-                    next();
-                } else {
-                    res.status(401).json({ message: `I'd give you a cookie, but I ate it! Invalid credentials.` });
-                }
-            })
-            .catch(err => {
-                res.status(500).json(err);
-            })
-    } else {
-        res.status(400).json({ message: 'Me want cookie! Please provide your credentials.' });
-    }
+   if (req.session && req.session.user) {
+       next();
+   } else {
+       res.status(401).json({ message: `I'd give you a cookie, but I ate it, and your credentials are invalid.`})
+   }
 }
 
 router.post('/register', (req, res) => {
@@ -51,7 +38,7 @@ router.post('/login', (req, res) => {
                 req.session.user = user;
                 res.status(200).json({ message: `Welcome ${user.username}, have a cookie...om nom nom nom.` });
             } else {
-                res.status(401).json({ message: `I'd give you a cookie, but I ate it! Invalid credentials.` });
+                res.status(401).json({ message: `I'd give you a cookie, but I ate it, and your credentials are invalid.` });
             }
         })
         .catch(err => {
