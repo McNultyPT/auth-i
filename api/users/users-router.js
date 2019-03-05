@@ -13,14 +13,14 @@ function restricted (req, res, next) {
                 if (user && bcrypt.compareSync(password, user.password)) {
                     next();
                 } else {
-                    res.status(401).json({ message: 'You shall not pass!' });
+                    res.status(401).json({ message: `I'd give you a cookie, but I ate it! Invalid credentials.` });
                 }
             })
             .catch(err => {
                 res.status(500).json(err);
             })
     } else {
-        res.status(400).json({ message: 'Please provide your credentials.' });
+        res.status(400).json({ message: 'Me want cookie! Please provide your credentials.' });
     }
 }
 
@@ -32,8 +32,9 @@ router.post('/register', (req, res) => {
     user.password = hash;
 
     Users.add(user)
-        .then(user => {
-            res.status(201).json(user);
+        .then(saved => {
+            req.session.user = saved;
+            res.status(201).json(saved);
         })
         .catch(err => {
             res.status(500).json(err);
@@ -47,9 +48,10 @@ router.post('/login', (req, res) => {
         .first()
         .then(user => {
             if (user && bcrypt.compareSync(password, user.password)) {
-                res.status(200).json({ message: `${user.username} is logged in.` });
+                req.session.user = user;
+                res.status(200).json({ message: `Welcome ${user.username}, have a cookie...om nom nom nom.` });
             } else {
-                res.status(401).json({ message: 'You shall not pass!' });
+                res.status(401).json({ message: `I'd give you a cookie, but I ate it! Invalid credentials.` });
             }
         })
         .catch(err => {
