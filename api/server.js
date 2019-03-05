@@ -1,13 +1,13 @@
 const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
-const bcrypt = require('bcryptjs');
 const session = require('express-session');
+const KnexSessionStore = require('connect-session-knex')(session);
 
-const Users = require('./users/users-model.js');
+const db = require('../data/dbConfig.js');
 
 const usersRouter = require('./users/users-router.js');
-// const restrictedRouter = require('./users/restricted-router.js');
+const restrictedRouter = require('./users/restricted-router.js');
 
 const server = express();
 
@@ -21,6 +21,13 @@ const sessionConfig = {
     httpOnly: true,
     resave: false,
     saveUninitialized: false,
+    store: new KnexSessionStore({
+        knex: db,
+        tablename: 'sessions',
+        sidfieldname: 'sid',
+        createtable: true,
+        clearInterval: 1000 * 60 * 60
+    }),
 };
 
 server.use(helmet());
@@ -28,28 +35,15 @@ server.use(express.json());
 server.use(cors());
 server.use(session(sessionConfig));
 
+function restricted (req, res, next) {
+    if (req.session && req.session.user) {
+        next();
+    } else {
+        res.status(401).json({ message: `I'd give you a cookie, but I ate it, and your credentials are invalid.`})
+    }
+ }
+
 server.use('/api/', usersRouter);
-// server.use('/api/restricted', restricted, restrictedRouter);
-
-// function restricted (req, res, next) {
-//     const { username, password } = req.body;
-
-//     if (username && password) {
-//         Users.findBy({ username })
-//             .first()
-//             .then(user => {
-//                 if (user && bcrypt.compareSync(password, user.password)) {
-//                     next();
-//                 } else {
-//                     res.status(401).json({ message: 'You shall not pass!' });
-//                 }
-//             })
-//             .catch(err => {
-//                 res.status(500).json(err);
-//             })
-//     } else {
-//         res.status(400).json({ message: 'Please provide your credentials.' });
-//     }
-// }
+server.use('/api/restricted/', restricted, restrictedRouter);
 
 module.exports = server;
