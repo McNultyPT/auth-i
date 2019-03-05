@@ -56,4 +56,18 @@ router.get('/users', restricted, (req, res) => {
         });
 });
 
+router.get('/logout', (req, res) => {
+    if (req.session) {
+        req.session.destroy(err => {
+            if (err) {
+                res.send('Me want cookie, but there was an error logging out!')
+            } else {
+                res.send('Goodbye! No cry because cookie is finished. Smile because cookie happened.')
+            }
+        })
+    } else {
+        res.end();
+    }
+});
+
 module.exports = router;
